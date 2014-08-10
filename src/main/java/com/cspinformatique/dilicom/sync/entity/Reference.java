@@ -1,31 +1,58 @@
 package com.cspinformatique.dilicom.sync.entity;
 
+import java.util.Date;
+
+import org.springframework.data.annotation.Id;
+import org.springframework.data.elasticsearch.annotations.Document;
+import org.springframework.data.elasticsearch.annotations.Field;
+
+@Document(indexName="reference")
 public class Reference {
 	// Functionnal Data.
+	private String ean13;
 	private String title;
 	private String standardLabel;
 	private String author;
 	private String shortCollection;
 	private String publisherName;
-	private String publisherIsbn;
+	private String isbnOrShortTitle;
 	private String theme;
-	private String publicationDate;
+	
+	@Field
+	private Date publicationDate;
 
 	// Technical info
 	private String dilicomUrl;
+	
+	private boolean loadedIntoErp;
 
-	public Reference(String title, String standardLabel, String author,
-			String shortCollection, String publisherName, String publisherIsbn,
-			String theme, String publicationDate, String dilicomUrl) {
+	public Reference(){
+		
+	}
+	
+	public Reference(String ean13, String title, String standardLabel, String author,
+			String shortCollection, String publisherName, String isbnOrShortTitle,
+			String theme, Date publicationDate, String dilicomUrl, boolean loadedIntoErp) {
+		this.ean13 = ean13;
 		this.title = title;
 		this.standardLabel = standardLabel;
 		this.author = author;
 		this.shortCollection = shortCollection;
 		this.publisherName = publisherName;
-		this.publisherIsbn = publisherIsbn;
+		this.isbnOrShortTitle = isbnOrShortTitle;
 		this.theme = theme;
 		this.publicationDate = publicationDate;
 		this.dilicomUrl = dilicomUrl;
+		this.loadedIntoErp = loadedIntoErp;
+	}
+
+	@Id
+	public String getEan13() {
+		return ean13;
+	}
+
+	public void setEan13(String ean13) {
+		this.ean13 = ean13;
 	}
 
 	public String getTitle() {
@@ -68,12 +95,12 @@ public class Reference {
 		this.publisherName = publisherName;
 	}
 
-	public String getPublisherIsbn() {
-		return publisherIsbn;
+	public String getIsbnOrShortTitle() {
+		return isbnOrShortTitle;
 	}
 
-	public void setPublisherIsbn(String publisherIsbn) {
-		this.publisherIsbn = publisherIsbn;
+	public void setIsbnOrShortTitle(String isbnOrShortTitle) {
+		this.isbnOrShortTitle = isbnOrShortTitle;
 	}
 
 	public String getTheme() {
@@ -84,11 +111,11 @@ public class Reference {
 		this.theme = theme;
 	}
 
-	public String getPublicationDate() {
+	public Date getPublicationDate() {
 		return publicationDate;
 	}
 
-	public void setPublicationDate(String publicationDate) {
+	public void setPublicationDate(Date publicationDate) {
 		this.publicationDate = publicationDate;
 	}
 
@@ -98,6 +125,14 @@ public class Reference {
 
 	public void setDilicomUrl(String dilicomUrl) {
 		this.dilicomUrl = dilicomUrl;
+	}
+
+	public boolean isLoadedIntoErp() {
+		return loadedIntoErp;
+	}
+
+	public void setLoadedIntoErp(boolean loadedIntoErp) {
+		this.loadedIntoErp = loadedIntoErp;
 	}
 
 }
