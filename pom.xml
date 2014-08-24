@@ -13,6 +13,10 @@
 
 	<version>0.0.1-SNAPSHOT</version>
 	<name>dilicom-sync</name>
+	
+	<properties>
+    	<start-class>com.cspinformatique.dilicom.sync.DilicomSync</start-class>
+	</properties>
 
 	<url>http://maven.apache.org</url>
 
@@ -79,6 +83,19 @@
 					<target>1.7</target>
 				</configuration>
 			</plugin>
+			
+            <plugin>
+                <groupId>org.springframework.boot</groupId>
+                <artifactId>spring-boot-maven-plugin</artifactId>
+
+                <executions>
+                    <execution>
+                        <goals>
+                            <goal>repackage</goal>
+                        </goals>
+                    </execution>
+                </executions>
+            </plugin>
             
 			<plugin>
 				<artifactId>maven-assembly-plugin</artifactId>
@@ -101,5 +118,4 @@
 			</plugin>
 		</plugins>
 	</build>
-	<packaging>war</packaging>
 </project>
