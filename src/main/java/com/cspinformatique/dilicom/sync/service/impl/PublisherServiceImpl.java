@@ -8,38 +8,36 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
 import com.cspinformatique.dilicom.sync.entity.Publisher;
-import com.cspinformatique.dilicom.sync.repository.elasticsearch.PublisherElasticRepository;
-import com.cspinformatique.dilicom.sync.repository.redis.PublisherRedisRepository;
+import com.cspinformatique.dilicom.sync.repository.mongo.PublisherRepository;
 import com.cspinformatique.dilicom.sync.service.PublisherService;
 
 @Service
 public class PublisherServiceImpl implements PublisherService {
-	@Autowired private PublisherElasticRepository publisherElasticRepository;
-	@Autowired private PublisherRedisRepository publisherRedisRepository;
+	@Autowired private PublisherRepository publisherRepository;
 	
 	@Override
 	public void addPublisherToConfiguration(Publisher publisher){
-		this.publisherRedisRepository.savePublisher(publisher);
+		this.publisherRepository.save(publisher);
 	}
 	
 	@Override
 	public void deletePublisherFromConfiguration(String name){
-		this.publisherRedisRepository.deletePublisher(name);
+		this.publisherRepository.delete(name);
 	}
 	
 	@Override
 	public Page<Publisher> searchPublisher(String searchString,
 			Pageable pageable) {
-		return this.publisherElasticRepository.findByNameLike(searchString, pageable);
+		return this.publisherRepository.findByNameLike(searchString, pageable);
 	}
 
 	@Override
 	public Publisher findByName(String name) {
-		return this.publisherElasticRepository.findOne(name);
+		return this.publisherRepository.findOne(name);
 	}
 
 	@Override
 	public List<Publisher> findConfiguredPublisher() {
-		return this.publisherRedisRepository.findAll();
+		return this.publisherRepository.findAll();
 	}
 }

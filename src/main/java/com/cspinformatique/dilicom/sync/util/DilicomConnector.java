@@ -1,6 +1,5 @@
 package com.cspinformatique.dilicom.sync.util;
 
-import java.text.DateFormat;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
@@ -40,12 +39,9 @@ public class DilicomConnector {
 	private String tomcatid;
 	private String jSessionId;
 	private RestTemplate restTemplate;
-	private DateFormat publicationDateFormat;
 
 	public DilicomConnector() {
 		this.restTemplate = new RestTemplate();
-		this.publicationDateFormat = new SimpleDateFormat(
-				PUBLICATION_DATE_FORMAT);
 	}
 
 	private void checkForSearchError(ResponseEntity<String> responseEntity) {
@@ -177,8 +173,8 @@ public class DilicomConnector {
 
 		if (publicationDate != null && !publicationDate.startsWith("Pas paru")) {
 			try {
-				reference.setPublicationDate(this.publicationDateFormat
-						.parse(publicationDate));
+				reference.setPublicationDate(new SimpleDateFormat(
+						PUBLICATION_DATE_FORMAT).parse(publicationDate));
 			} catch (NumberFormatException numberFormatEx) {
 				logger.error(publicationDate + " could not be parsed as date "
 						+ PUBLICATION_DATE_FORMAT, numberFormatEx);

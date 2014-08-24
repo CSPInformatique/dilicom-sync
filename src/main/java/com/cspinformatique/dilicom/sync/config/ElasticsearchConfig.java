@@ -13,7 +13,7 @@ import org.springframework.data.elasticsearch.repository.config.EnableElasticsea
 import com.cspinformatique.dilicom.sync.elasticsearch.TransportClientUtil;
 
 @Configuration
-@EnableElasticsearchRepositories
+@EnableElasticsearchRepositories(basePackages="com.cspinformatique.dilicom.sync.repository.elasticsearch")
 @PropertySource("classpath:config/persistence/elasticsearch.properties")
 public class ElasticsearchConfig {
 	@Resource

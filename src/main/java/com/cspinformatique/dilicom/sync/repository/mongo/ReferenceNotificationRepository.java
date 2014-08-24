@@ -1,4 +1,4 @@
-package com.cspinformatique.dilicom.sync.repository.redis;
+package com.cspinformatique.dilicom.sync.repository.mongo;
 
 import java.util.List;
 
