@@ -131,8 +131,8 @@ public class DilicomConnector {
 				new JerryFunction() {
 					@Override
 					public boolean onNode(Jerry $this, int index) {
-						String tdContent = $this.$("td").html().trim()
-								.replace("\n", "").replace("\r", "");
+						String tdContent = DilicomHttpUtil.cleanString($this.$(
+								"td").html());
 						if (index == 3
 								&& $this.$("th").html().contains("EAN 13")) {
 							reference.setEan13(tdContent);
@@ -167,17 +167,19 @@ public class DilicomConnector {
 				});
 
 		reference
-				.setTheme(document
-						.$(".detail_fiche:nth-child(1) tbody:nth-child(2) td.wrappable div")
-						.html());
-		String publicationDate = document.$(
-				".detail_fiche:nth-child(2) td:nth-child(3)").html().trim();
+				.setTheme(DilicomHttpUtil
+						.cleanString(document
+								.$(".detail_fiche:nth-child(1) tbody:nth-child(2) td.wrappable div")
+								.html()));
+
+		String publicationDate = DilicomHttpUtil.cleanString(document.$(
+				".detail_fiche:nth-child(2) td:nth-child(3)").html());
 
 		if (publicationDate != null && !publicationDate.startsWith("Pas paru")) {
 			try {
 				reference.setPublicationDate(this.publicationDateFormat
 						.parse(publicationDate));
-			}catch(NumberFormatException numberFormatEx){
+			} catch (NumberFormatException numberFormatEx) {
 				logger.error(publicationDate + " could not be parsed as date "
 						+ PUBLICATION_DATE_FORMAT, numberFormatEx);
 			} catch (ParseException parseEx) {
@@ -185,6 +187,8 @@ public class DilicomConnector {
 						+ PUBLICATION_DATE_FORMAT, parseEx);
 			}
 		}
+
+		reference.setCoverImageUrl(document.$("a#cover_img").attr("href"));
 
 		return reference;
 	}
@@ -276,7 +280,7 @@ public class DilicomConnector {
 		if (!this.initialized) {
 			throw new ConnectorNotInitializedException();
 		}
-		
+
 		logger.info("Request page " + page);
 
 		String url = "https://dilicom-prod.centprod.com/catalogue/consulter_articles.html?pageSize="
@@ -299,8 +303,9 @@ public class DilicomConnector {
 		document.$(".book_row").each(new JerryFunction() {
 			@Override
 			public boolean onNode(Jerry $this, int index) {
-				Reference reference = loadReferenceFromUrl("https://dilicom-prod.centprod.com"
-						+ $this.$(".fiche_title a").attr("href"), false);
+				Reference reference = loadReferenceFromUrl(
+						"https://dilicom-prod.centprod.com"
+								+ $this.$(".fiche_title a").attr("href"), false);
 
 				references.add(reference);
 

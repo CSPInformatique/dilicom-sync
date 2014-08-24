@@ -1,0 +1,121 @@
+<!DOCTYPE html SYSTEM "http://www.thymeleaf.org/dtd/xhtml1-strict-thymeleaf-spring4-4.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml"
+	xmlns:th="http://www.thymeleaf.org">
+
+<head>
+<title>Dilicom Sync - Références</title>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<link rel="stylesheet" type="text/css" media="all"
+	href="../css/dilicom-sync.css"
+	th:href="@{/libs/bootstrap-3.2.0/css/bootstrap.min.css}" />
+<link rel="stylesheet" type="text/css" media="all"
+	href="../css/dilicom-sync.css" th:href="@{/css/dilicom-sync.css}" />
+</head>
+
+<body>
+	<div th:include="menu :: menu"></div>
+	
+	<div class="referencePage-container"></div>
+
+	<script type="text/template" id="loading-template">
+		<div class="text-center">
+			<div>Chargement des références</div>
+			<div>
+		       	<img class="loading" src="images/misc/loading.gif" />" alt="Chargement" />
+		    </div>
+		</div>
+	</script>
+
+	<script type="text/template" id="referencePage-template">
+		<ul class="pager row text-center">
+			<li class="col-md-2 previous">
+	<@	if(!page.firstPage){	@>
+				<a href="#">&larr; Précédent</a>
+	<@	}	@>
+			</li>
+
+			<li class="col-md-8">Page <@= page.number + 1 @></li>
+
+			<li class="col-md-2 next">
+	<@	if(!page.lastPage){	@>
+				<a href="#">Suivant &rarr;</a>
+	<@	}	@>
+			</li>
+		</ul>
+
+		<div class="references table-responsive">
+			<table class="table table-hover">
+				<thead class="text-center">
+					<tr class="active">
+						<th>
+							<span>EAN 13</span>
+						</th>
+						<th>
+							<a data-sortBy="title">Titre</a>
+							<span class="ascending hide glyphicon glyphicon-chevron-up" />
+							<span class="descending hide glyphicon glyphicon-chevron-down" />
+						</th>
+						<th>
+							<a data-sortBy="author">Auteur</a>
+							<span class="ascending hide glyphicon glyphicon-chevron-up" />
+							<span class="descending hide glyphicon glyphicon-chevron-down" />
+						</th>
+						<th>
+							<a data-sortBy="publisherName">Editeur</a>
+							<span class="ascending hide glyphicon glyphicon-chevron-up" />
+							<span class="descending hide glyphicon glyphicon-chevron-down" />
+						</th>
+						<th><a data-sortBy="publicationDate">Date de pub.</a>
+							<span class="ascending hide glyphicon glyphicon-chevron-up" />
+							<span class="descending hide glyphicon glyphicon-chevron-down" />
+						</th>
+						<th>
+							&nbsp;
+						</th>
+						<th>
+							<a>Couverture</a>
+						</th>
+					</tr>
+				</thead>
+				
+				<tbody>
+					<@ _.each(page.content, function(reference) { @>	
+						<tr data-reference-ean13="<@= reference.ean13 @>">
+							<td class="ean13"><@= reference.ean13 @></td>
+							<td class="title"><@= reference.title @></td>
+							<td class="author"><@= reference.author @></td>
+							<td class="publisherName"><@= reference.publisherName @></td>
+							<td class="publicationDate date"><@= reference.publicationDate @></td>
+							<td class="badges">
+								<@	if(reference.loadedIntoErp){	@>
+									<span class="loadIntoErp glyphicon glyphicon-plus"> </span>
+								<@	}else{	@>
+									<span class="glyphicon glyphicon-upload"> </span>
+								<@	}	@>
+
+								<a href="<@= reference.dilicomUrl @>" target="_blank">
+									<span class="glyphicon glyphicon-list-alt"> </span>
+								</a>
+							</td>
+							<td class="coverImageUrl">
+								<!--<img src="<@= reference.coverImageUrl @>"/>-->
+							</td>
+						</tr>
+					<@}); @>
+				</tbody>
+			</table>
+		</div>
+	</script>
+
+	<script type="text/javascript" th:src="@{/libs/jquery-2.1.1/jquery.min.js}"></script>
+	<script type="text/javascript" th:src="@{/libs/underscore-1.6.0/underscore-min.js}"></script>
+	<script type="text/javascript" th:src="@{/libs/backbone-1.1.2/backbone-min.js}"></script>
+	<script type="text/javascript" th:src="@{/libs/moments-2.8.1/moment.js}"></script>
+	<script type="text/javascript" th:src="@{/js/init.js}"></script>
+	<script type="text/javascript" th:src="@{/js/reference/reference-model.js}"></script>
+	<script type="text/javascript" th:src="@{/js/reference/reference-page.js}"></script>
+	<script type="text/javascript" th:src="@{/js/reference/reference-view.js}"></script>
+</body>
+
+</html>

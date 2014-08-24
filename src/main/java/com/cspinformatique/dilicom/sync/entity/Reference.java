@@ -17,13 +17,14 @@ public class Reference {
 	private String publisherName;
 	private String isbnOrShortTitle;
 	private String theme;
+	private String coverImageUrl;
 	
 	@Field
 	private Date publicationDate;
 
-	// Technical info
+	// Technical infos
 	private String dilicomUrl;
-	
+	private boolean hided;
 	private boolean loadedIntoErp;
 
 	public Reference(){
@@ -32,7 +33,7 @@ public class Reference {
 	
 	public Reference(String ean13, String title, String standardLabel, String author,
 			String shortCollection, String publisherName, String isbnOrShortTitle,
-			String theme, Date publicationDate, String dilicomUrl, boolean loadedIntoErp) {
+			String theme, String coverImageUrl, Date publicationDate, String dilicomUrl, boolean hided, boolean loadedIntoErp) {
 		this.ean13 = ean13;
 		this.title = title;
 		this.standardLabel = standardLabel;
@@ -41,8 +42,10 @@ public class Reference {
 		this.publisherName = publisherName;
 		this.isbnOrShortTitle = isbnOrShortTitle;
 		this.theme = theme;
+		this.coverImageUrl = coverImageUrl;
 		this.publicationDate = publicationDate;
 		this.dilicomUrl = dilicomUrl;
+		this.hided = hided;
 		this.loadedIntoErp = loadedIntoErp;
 	}
 
@@ -111,6 +114,14 @@ public class Reference {
 		this.theme = theme;
 	}
 
+	public String getCoverImageUrl() {
+		return coverImageUrl;
+	}
+
+	public void setCoverImageUrl(String coverImageUrl) {
+		this.coverImageUrl = coverImageUrl;
+	}
+
 	public Date getPublicationDate() {
 		return publicationDate;
 	}
@@ -125,6 +136,14 @@ public class Reference {
 
 	public void setDilicomUrl(String dilicomUrl) {
 		this.dilicomUrl = dilicomUrl;
+	}
+
+	public boolean isHided() {
+		return hided;
+	}
+
+	public void setHided(boolean hided) {
+		this.hided = hided;
 	}
 
 	public boolean isLoadedIntoErp() {

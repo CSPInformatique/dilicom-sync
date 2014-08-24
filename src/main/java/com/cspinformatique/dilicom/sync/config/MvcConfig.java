@@ -11,9 +11,9 @@ import org.springframework.web.servlet.config.annotation.WebMvcConfigurerAdapter
 public class MvcConfig extends WebMvcConfigurerAdapter {
 	@Override
 	public void addResourceHandlers(ResourceHandlerRegistry registry) {
-	    registry.addResourceHandler("/css/**").addResourceLocations("classpath:css/**");
-	    registry.addResourceHandler("/js/**").addResourceLocations("classpath:js/**");
-	    registry.addResourceHandler("/libs/**").addResourceLocations("classpath:libs/**");
+	    registry.addResourceHandler("/css/**").addResourceLocations("css/**");
+	    registry.addResourceHandler("/js/**").addResourceLocations("js/**");
+	    registry.addResourceHandler("/libs/**").addResourceLocations("libs/**");
 	}
 	
 	public @Bean MessageSource messageSource(){

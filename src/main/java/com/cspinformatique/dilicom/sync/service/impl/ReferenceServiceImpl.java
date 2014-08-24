@@ -10,6 +10,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 import javax.annotation.PostConstruct;
 
 import org.apache.commons.io.FileUtils;
+import org.apache.commons.lang.exception.ExceptionUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -19,7 +20,8 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
 import com.cspinformatique.dilicom.sync.entity.Reference;
-import com.cspinformatique.dilicom.sync.repository.ReferenceRepository;
+import com.cspinformatique.dilicom.sync.entity.ReferenceNotification;
+import com.cspinformatique.dilicom.sync.repository.elasticsearch.ReferenceRepository;
 import com.cspinformatique.dilicom.sync.service.ReferenceService;
 import com.cspinformatique.dilicom.sync.util.DilicomConnector;
 import com.fasterxml.jackson.core.JsonProcessingException;
@@ -81,6 +83,21 @@ public class ReferenceServiceImpl implements ReferenceService {
 		} catch (IOException ioEx) {
 			throw new RuntimeException(ioEx);
 		}
+	}
+	
+	@Override
+	public void hideReference(String ean13){
+		Reference reference = this.referenceRepository.findOne(ean13);
+		
+		if(reference == null){
+			logger.error("Reference " + ean13 + " doesn't exists.");
+			
+			return;
+		}
+		
+		reference.setHided(true);
+		
+		this.referenceRepository.save(reference);
 	}
 	
 	@Override
@@ -199,13 +216,22 @@ public class ReferenceServiceImpl implements ReferenceService {
 	}
 	
 	@Override
-	public void loadReferencesIntoErp(List<Reference> references){
-		
-		for(Reference reference : references){
-			reference.setLoadedIntoErp(true);
+	public void publishToOdoo(String ean13) {
+		ReferenceNotification notification = new ReferenceNotification(ean13, new Date(), ReferenceNotification.STATUS_ERROR, null);
+		try{
+			logger.warn("Publication to ERP not yet implemented");
+			
+			notification.setStatus(ReferenceNotification.STATUS_OK);
+		}catch(Exception ex){
+			logger.error("Error while publishing reference " + ean13 + " to ERP system.", ex);
+			
+			notification.setCause(ExceptionUtils.getStackTrace(ex));
+			
+			throw new RuntimeException(ex);
+		}finally{
+			// save the notification status.
 		}
 		
-		this.save(references);
 	}
 	
 	@Override
@@ -227,6 +253,17 @@ public class ReferenceServiceImpl implements ReferenceService {
 	public Page<Reference> search(boolean loadedIntoErp, Pageable pageable){
 		return this.referenceRepository.findByLoadedIntoErp(loadedIntoErp, pageable);
 	}
+
+	@Override
+	public Page<Reference> search(boolean hided, boolean loadedIntoErp,
+			Pageable pageable) {
+		return this.referenceRepository.findByHidedAndLoadedIntoErp(hided, loadedIntoErp, pageable);
+	}
+
+	@Override
+	public Page<Reference> searchByHided(boolean hided, Pageable pageable) {
+		return this.referenceRepository.findByHided(hided, pageable);
+	}
 	
 	@Override
 	public Page<Reference> searchByTitle(String title, Pageable pageable){
@@ -236,5 +273,30 @@ public class ReferenceServiceImpl implements ReferenceService {
 	@Override
 	public Page<Reference> searchByTitle(String title, boolean loadedIntoErp, Pageable pageable){
 		return this.referenceRepository.findByTitleLikeAndLoadedIntoErp(title, loadedIntoErp, pageable);
+	}
+	
+	@Override
+	public Page<Reference> searchByTitle(String title, boolean hided, boolean loadedIntoErp, Pageable pageable){
+		return this.referenceRepository.findByTitleLikeAndHidedAndLoadedIntoErp(title, hided, loadedIntoErp, pageable);
+	}
+	
+	@Override
+	public Page<Reference> searchByTitleAndHided(String title, boolean hided, Pageable pageable){
+		return this.referenceRepository.findByTitleLikeAndHided(title, hided, pageable);
+	}
+	
+	@Override
+	public void unhideReference(String ean13){
+		Reference reference = this.referenceRepository.findOne(ean13);
+		
+		if(reference == null){
+			logger.error("Reference " + ean13 + " doesn't exists.");
+			
+			return;
+		}
+		
+		reference.setHided(false);
+		
+		this.referenceRepository.save(reference);
 	}
 }
