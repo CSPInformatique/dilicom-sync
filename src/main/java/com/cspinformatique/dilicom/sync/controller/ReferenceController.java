@@ -10,7 +10,6 @@ import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
-import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.bind.annotation.ResponseStatus;
 
@@ -40,18 +39,6 @@ public class ReferenceController {
 	@ResponseStatus(HttpStatus.NO_CONTENT)
 	public void importDump(){
 		this.referenceService.importDump();
-	}
-	
-	@RequestMapping(params="initialize")
-	@ResponseStatus(HttpStatus.NO_CONTENT)
-	public void initializeReferencesIndex(){
-		this.referenceService.initializeReferencesIndex();
-	}
-	
-	@ResponseStatus(HttpStatus.NO_CONTENT)
-	@RequestMapping(params={"initialize", "startPageIndex"})
-	public void initializeReferencesIndex(@RequestParam int startPageIndex){
-		this.referenceService.initializeReferencesIndex(startPageIndex);
 	}
 
 	@ResponseStatus(HttpStatus.OK)

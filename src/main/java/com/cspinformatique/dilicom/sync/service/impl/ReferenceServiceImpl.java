@@ -17,11 +17,19 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 
+import com.cspinformatique.concurrent.Executor;
+import com.cspinformatique.concurrent.Task;
 import com.cspinformatique.dilicom.sync.entity.Reference;
 import com.cspinformatique.dilicom.sync.entity.ReferenceNotification;
+import com.cspinformatique.dilicom.sync.entity.ReferenceNotification.Status;
+import com.cspinformatique.dilicom.sync.entity.ReferenceRequest;
 import com.cspinformatique.dilicom.sync.repository.elasticsearch.ReferenceRepository;
+import com.cspinformatique.dilicom.sync.service.ConfigEntryService;
+import com.cspinformatique.dilicom.sync.service.ReferenceNotificationService;
+import com.cspinformatique.dilicom.sync.service.ReferenceRequestService;
 import com.cspinformatique.dilicom.sync.service.ReferenceService;
 import com.cspinformatique.dilicom.sync.util.DilicomConnector;
 import com.fasterxml.jackson.core.JsonProcessingException;
@@ -32,19 +40,26 @@ public class ReferenceServiceImpl implements ReferenceService {
 	private static final Logger logger = LoggerFactory
 			.getLogger(ReferenceServiceImpl.class);
 	
-	private static final int MAX_CONCURRENT_THREAD = 25;
 	private static final int RESULTS_PER_PAGE = 30;
+	
+	@Autowired private ConfigEntryService configEntryService;
 	
 	@Autowired
 	private DilicomConnector dilicomConnector;
 	
 	@Autowired
+	private ReferenceNotificationService referenceNotificationService;
+	
+	@Autowired
+	private ReferenceRequestService referenceRequestService;
+	
+	@Autowired
 	private ReferenceRepository referenceRepository;
 
 	private boolean loadCompleted ;
-	private boolean loadInProgress;
+	private boolean pageRequestLoadInProgress;
 	private AtomicInteger page;
-	private int threadCount;
+	private boolean referenceLoadInProgress;
 	
 	@Override
 	public void exportDump(){
@@ -83,6 +98,16 @@ public class ReferenceServiceImpl implements ReferenceService {
 		} catch (IOException ioEx) {
 			throw new RuntimeException(ioEx);
 		}
+	}
+	
+	private synchronized ReferenceNotification findNextReferenceToLoad(){
+		ReferenceNotification referenceNotification = this.referenceNotificationService.findNextReferenceToProcess();
+		
+		referenceNotification.setStatus(Status.PROCESSING);
+		
+		this.referenceNotificationService.save(referenceNotification);
+		
+		return referenceNotification;
 	}
 	
 	@Override
@@ -139,89 +164,138 @@ public class ReferenceServiceImpl implements ReferenceService {
 	private void init(){
 		System.out.println("ReferenceService initialized.");
 	}
-
-	@Override
-	public void initializeReferencesIndex() {
-		this.loadReferences(true, 0);
-	}
-
-	@Override
-	public void initializeReferencesIndex(int startPageIndex) {
-		this.loadReferences(true, startPageIndex);
-	}
 	
-	@Override
+	@Scheduled(fixedRate=1000 * 60)
 	public void loadLatestReferences() {
-		this.loadReferences(false, 0);
+		this.loadReferencePages(true, this.referenceRequestService.findPageNextPageToProcess());
 	}
 	
 	@Override
 	public Reference loadReferenceFromDilicomUrl(String dilicomUrl){
-		return this.dilicomConnector.loadReferenceFromUrl(dilicomUrl, true);
+		return this.dilicomConnector.loadReferenceFromUrl(dilicomUrl);
 	}
 
-	private void loadReferences(boolean fullLoad, int startPage){
-		if(loadInProgress){
+	private void loadReferencePages(boolean fullLoad, int startPage){
+		if(pageRequestLoadInProgress){
 			throw new RuntimeException("A load is currently in progress.");
 		}
 		
-		this.loadInProgress = true;
+		this.pageRequestLoadInProgress = true;
 		this.page = new AtomicInteger(startPage);
-		this.threadCount = 0;
 		
 		this.dilicomConnector.initializeSearch(fullLoad);
 		
+		Executor executor = new Executor();
+		executor.start();
+		
 		do{
-			if(this.threadCount < MAX_CONCURRENT_THREAD){
-				++threadCount;
-				
-				new Thread(new Runnable() {
-					@Override
-					public void run() {
-						Date startDate = new Date();
+			executor.publishNewTask(new Task() {
+				@Override
+				public long execute() {
+					int pageIndex = page.getAndIncrement();
+					
+					try{
+						// Flags page request processing as a page to process.
+						referenceRequestService.save(new ReferenceRequest(pageIndex, ReferenceRequest.Status.TO_PROCESS, null));
 						
-						int pageIndex = page.incrementAndGet();
+						// Retreives all the references from the page.
+						List<ReferenceNotification> referenceNotifications = new ArrayList<ReferenceNotification>();
+						for(String referenceUrl : dilicomConnector.searchReferences(pageIndex, false, RESULTS_PER_PAGE)){
+							referenceNotifications.add(new ReferenceNotification(referenceUrl, new Date(), Status.TO_PROCESS, null));
+						}
 						
-						List<Reference> references = dilicomConnector.searchReferences(pageIndex, false, RESULTS_PER_PAGE);
+						// Persists the references.
+						referenceNotificationService.saveAll(referenceNotifications);
 						
-						referenceRepository.save(references);
-						
-						logger.info(referenceRepository.count() + " references available after requesting page " + pageIndex + ".");
-						
-						if(references.size() < RESULTS_PER_PAGE){
+						if(referenceNotifications.size() < RESULTS_PER_PAGE){
 							loadCompleted = true;
 						}
-
-						--threadCount;
 						
-						Date endDate = new Date();
+						// Flags page request processing as completed.
+						referenceRequestService.save(new ReferenceRequest(pageIndex, ReferenceRequest.Status.OK, null));
+					}catch(Exception ex){
+						try{
+							referenceRequestService.save(new ReferenceRequest(pageIndex, ReferenceRequest.Status.ERROR, ExceptionUtils.getFullStackTrace(ex)));
+						}catch(Exception ex2){
+							logger.error("Error while persisting reference request status.", ex2);
+						}
 						
-						long processingTime = endDate.getTime() - startDate.getTime();
-						
-						double referencesProcessedByHour = (RESULTS_PER_PAGE * (1000 * 60 * 60)) / processingTime;
-						
-						logger.info("Loading " + referencesProcessedByHour * MAX_CONCURRENT_THREAD + " per hour.");
+						logger.error("Error while processing page " + pageIndex + ".", ex);
 					}
-				}).start();
-			}else{
-				try{
-					Thread.sleep(200);
-				}catch(InterruptedException interruptedEx){
-					throw new RuntimeException(interruptedEx);
+
+					return RESULTS_PER_PAGE;
 				}
-			}
+			});
 		}while(!loadCompleted);
 		
-		this.loadInProgress = false;
+		executor.waitForCompletion();
+		
+		this.pageRequestLoadInProgress = false;
+	}
+	
+	@Scheduled(fixedRate=1000)
+	private void loadReferences(){
+		if(referenceLoadInProgress){
+			throw new RuntimeException("A load is currently in progress.");
+		}
+		
+		this.referenceLoadInProgress = true;
+		
+		Executor executor = new Executor();
+		
+		executor.start();
+		
+		do{
+			executor.publishNewTask(new Task() {
+				@Override
+				public long execute() {
+					ReferenceNotification referenceNotification = null;
+					try{
+						referenceNotification =  findNextReferenceToLoad();
+						
+						save(dilicomConnector.loadReferenceFromUrl(referenceNotification.getUrl()));
+						
+						referenceNotification.setStatus(Status.OK);
+					}catch(Exception ex){
+						if(referenceNotification != null){
+							try{
+								referenceNotification.setStatus(Status.ERROR);
+								referenceNotification.setCause(ExceptionUtils.getFullStackTrace(ex));
+							}catch(Exception ex2){
+								logger.error("Error while handling reference notification error from " + referenceNotification.getUrl() , ex2);
+							}
+
+							logger.error("Error while processing reference notification from " + referenceNotification.getUrl(), ex);
+						}else{
+							logger.error("Error", ex);
+						}
+					}finally{
+						if(referenceNotification != null){
+							try{
+								referenceNotificationService.save(referenceNotification);
+							}catch(Exception ex){
+								logger.error("Error while processing reference notification from " + referenceNotification.getUrl(), ex);
+							}
+						}
+					}
+
+					return 1;
+				}
+			});
+		}while(!loadCompleted);		
+		
+		executor.waitForCompletion();
+		
+		this.referenceLoadInProgress = false;
 	}
 	
 	@Override
 	public void publishToOdoo(String ean13) {
-		ReferenceNotification notification = new ReferenceNotification(ean13, new Date(), ReferenceNotification.STATUS_ERROR, null);
+		ReferenceNotification notification = new ReferenceNotification(ean13, new Date(), ReferenceNotification.Status.ERROR, null);
 		try{
 			logger.warn("Publication to ERP not yet implemented");
 			
-			notification.setStatus(ReferenceNotification.STATUS_OK);
+			notification.setStatus(ReferenceNotification.Status.OK);
 		}catch(Exception ex){
 			logger.error("Error while publishing reference " + ean13 + " to ERP system.", ex);
 			

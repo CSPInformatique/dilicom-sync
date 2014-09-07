@@ -1,9 +1,9 @@
 package com.cspinformatique.dilicom.sync.entity;
 
 import org.springframework.data.annotation.Id;
-import org.springframework.data.elasticsearch.annotations.Document;
+import org.springframework.data.mongodb.core.mapping.Document;
 
-@Document(indexName="publisher")
+@Document(collection="publisher")
 public class Publisher {
 	private String name;
 	

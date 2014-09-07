@@ -1,7 +1,6 @@
 package com.cspinformatique.dilicom.sync.config;
 
 import java.net.UnknownHostException;
-import java.util.Arrays;
 
 import javax.annotation.Resource;
 
@@ -14,7 +13,6 @@ import org.springframework.data.mongodb.repository.config.EnableMongoRepositorie
 
 import com.mongodb.Mongo;
 import com.mongodb.MongoClient;
-import com.mongodb.MongoCredential;
 import com.mongodb.ServerAddress;
 
 @Configuration
@@ -30,13 +28,8 @@ public class MongoConfig {
 					new ServerAddress(
 							env.getRequiredProperty("dilicom.sync.mongo.host"),
 							env.getRequiredProperty("dilicom.sync.mongo.port",
-									Integer.class)),
-					Arrays.asList(new MongoCredential[] { MongoCredential.createPlainCredential(
-							env.getRequiredProperty("dilicom.sync.mongo.user"),
-							env.getRequiredProperty("dilicom.sync.mongo.adminDatabase"),
-							env.getRequiredProperty(
-									"dilicom.sync.mongo.password")
-									.toCharArray()) }));
+									Integer.class))
+					);
 		} catch (UnknownHostException unknownHostEx) {
 			throw new RuntimeException(unknownHostEx);
 		}

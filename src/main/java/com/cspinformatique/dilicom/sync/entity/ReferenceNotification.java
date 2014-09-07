@@ -3,34 +3,37 @@ package com.cspinformatique.dilicom.sync.entity;
 import java.util.Date;
 
 import org.springframework.data.annotation.Id;
+import org.springframework.data.mongodb.core.mapping.Document;
 
+@Document(collection="referenceNotification")
 public class ReferenceNotification {
-	public static final String STATUS_ERROR = "ERROR";
-	public static final String STATUS_OK = "OK";
+	public enum Status{
+		ERROR, TO_PROCESS, OK, PROCESSING
+	}
 	
-	private String ean13;
+	private String url;
 	private Date timestamp;
-	private String status;
+	private Status status;
 	private String cause;
 	
 	public ReferenceNotification(){
 
 	}
 
-	public ReferenceNotification(String ean13, Date timestamp,
-			String status, String cause) {
-		this.ean13 = ean13;
+	public ReferenceNotification(String url, Date timestamp,
+			Status status, String cause) {
+		this.url = url;
 		this.timestamp = timestamp;
 		this.status = status;
 	}
 
 	@Id
-	public String getEan13() {
-		return ean13;
+	public String getUrl() {
+		return url;
 	}
 
-	public void setEan13(String ean13) {
-		this.ean13 = ean13;
+	public void setUrl(String url) {
+		this.url = url;
 	}
 
 	public Date getTimestamp() {
@@ -41,11 +44,11 @@ public class ReferenceNotification {
 		this.timestamp = timestamp;
 	}
 
-	public String getStatus() {
+	public Status getStatus() {
 		return status;
 	}
 
-	public void setStatus(String status) {
+	public void setStatus(Status status) {
 		this.status = status;
 	}
 

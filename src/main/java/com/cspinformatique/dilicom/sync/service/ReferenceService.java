@@ -13,14 +13,8 @@ public interface ReferenceService {
 	
 	public void importDump();
 	
-	public void initializeReferencesIndex();
-	
-	public void initializeReferencesIndex(int startPageIndex);
-	
 	public Reference loadReferenceFromDilicomUrl(String dilicomUrl);
-	
-	public void loadLatestReferences();
-	
+		
 	public void publishToOdoo(String ean13);
 	
 	public void save(Reference reference);
