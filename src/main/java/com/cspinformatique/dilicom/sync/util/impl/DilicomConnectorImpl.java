@@ -286,7 +286,7 @@ public class DilicomConnectorImpl implements DilicomConnector{
 			throw new ConnectorNotInitializedException();
 		}
 
-		logger.info("Requesting page " + page);
+		logger.debug("Requesting page " + page);
 
 		String url = "https://dilicom-prod.centprod.com/catalogue/consulter_articles.html?pageSize="
 				+ pageSize

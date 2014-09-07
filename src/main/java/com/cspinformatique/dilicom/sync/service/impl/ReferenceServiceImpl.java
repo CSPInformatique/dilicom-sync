@@ -3,6 +3,7 @@ package com.cspinformatique.dilicom.sync.service.impl;
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Calendar;
 import java.util.Date;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -56,7 +57,8 @@ public class ReferenceServiceImpl implements ReferenceService {
 	@Autowired
 	private ReferenceRepository referenceRepository;
 
-	private boolean loadCompleted ;
+	private boolean referencePageloadCompleted ;
+	private boolean referenceloadCompleted = false;
 	private boolean pageRequestLoadInProgress;
 	private AtomicInteger page;
 	private boolean referenceLoadInProgress;
@@ -166,7 +168,7 @@ public class ReferenceServiceImpl implements ReferenceService {
 	}
 	
 	@Scheduled(fixedRate=1000 * 60)
-	public void loadLatestReferences() {
+	private void loadLatestReferences() {
 		this.loadReferencePages(true, this.referenceRequestService.findPageNextPageToProcess());
 	}
 	
@@ -176,117 +178,133 @@ public class ReferenceServiceImpl implements ReferenceService {
 	}
 
 	private void loadReferencePages(boolean fullLoad, int startPage){
-		if(pageRequestLoadInProgress){
-			throw new RuntimeException("A load is currently in progress.");
-		}
+		if(!isRunningInsideBusinessHours()){
+			if(pageRequestLoadInProgress){
+				throw new RuntimeException("A load is currently in progress.");
+			}
+			
+			this.pageRequestLoadInProgress = true;
+			this.page = new AtomicInteger(startPage);
+			
+			this.dilicomConnector.initializeSearch(fullLoad);
+			
+			Executor executor = new Executor("Reference URL loader");
+			executor.start();
+			
+			do{
+				if(!isRunningInsideBusinessHours()){
+					executor.publishNewTask(new Task() {
+						@Override
+						public long execute() {
+							int pageIndex = page.getAndIncrement();
+							
+							try{
+								// Flags page request processing as a page to process.
+								referenceRequestService.save(new ReferenceRequest(pageIndex, ReferenceRequest.Status.TO_PROCESS, null));
+								
+								// Retreives all the references from the page.
+								List<ReferenceNotification> referenceNotifications = new ArrayList<ReferenceNotification>();
+								for(String referenceUrl : dilicomConnector.searchReferences(pageIndex, false, RESULTS_PER_PAGE)){
+									referenceNotifications.add(new ReferenceNotification(referenceUrl, new Date(), Status.TO_PROCESS, null));
+								}
+								
+								// Persists the references.
+								referenceNotificationService.saveAll(referenceNotifications);
+								
+								if(referenceNotifications.size() < RESULTS_PER_PAGE){
+									referencePageloadCompleted = true;
+								}
+								
+								// Flags page request processing as completed.
+								referenceRequestService.save(new ReferenceRequest(pageIndex, ReferenceRequest.Status.OK, null));
+							}catch(Exception ex){
+								try{
+									referenceRequestService.save(new ReferenceRequest(pageIndex, ReferenceRequest.Status.ERROR, ExceptionUtils.getFullStackTrace(ex)));
+								}catch(Exception ex2){
+									logger.error("Error while persisting reference request status.", ex2);
+								}
+								
+								logger.error("Error while processing page " + pageIndex + ".", ex);
+							}
 		
-		this.pageRequestLoadInProgress = true;
-		this.page = new AtomicInteger(startPage);
-		
-		this.dilicomConnector.initializeSearch(fullLoad);
-		
-		Executor executor = new Executor();
-		executor.start();
-		
-		do{
-			executor.publishNewTask(new Task() {
-				@Override
-				public long execute() {
-					int pageIndex = page.getAndIncrement();
-					
-					try{
-						// Flags page request processing as a page to process.
-						referenceRequestService.save(new ReferenceRequest(pageIndex, ReferenceRequest.Status.TO_PROCESS, null));
-						
-						// Retreives all the references from the page.
-						List<ReferenceNotification> referenceNotifications = new ArrayList<ReferenceNotification>();
-						for(String referenceUrl : dilicomConnector.searchReferences(pageIndex, false, RESULTS_PER_PAGE)){
-							referenceNotifications.add(new ReferenceNotification(referenceUrl, new Date(), Status.TO_PROCESS, null));
+							return RESULTS_PER_PAGE;
 						}
-						
-						// Persists the references.
-						referenceNotificationService.saveAll(referenceNotifications);
-						
-						if(referenceNotifications.size() < RESULTS_PER_PAGE){
-							loadCompleted = true;
-						}
-						
-						// Flags page request processing as completed.
-						referenceRequestService.save(new ReferenceRequest(pageIndex, ReferenceRequest.Status.OK, null));
-					}catch(Exception ex){
-						try{
-							referenceRequestService.save(new ReferenceRequest(pageIndex, ReferenceRequest.Status.ERROR, ExceptionUtils.getFullStackTrace(ex)));
-						}catch(Exception ex2){
-							logger.error("Error while persisting reference request status.", ex2);
-						}
-						
-						logger.error("Error while processing page " + pageIndex + ".", ex);
-					}
-
-					return RESULTS_PER_PAGE;
+					});
+				}else{
+					referencePageloadCompleted = true;
 				}
-			});
-		}while(!loadCompleted);
-		
-		executor.waitForCompletion();
-		
-		this.pageRequestLoadInProgress = false;
+			}while(!referencePageloadCompleted);
+			
+			executor.waitForCompletion();
+			
+			this.pageRequestLoadInProgress = false;
+		}
 	}
 	
 	@Scheduled(fixedRate=1000)
 	private void loadReferences(){
-		if(referenceLoadInProgress){
-			throw new RuntimeException("A load is currently in progress.");
-		}
-		
-		this.referenceLoadInProgress = true;
-		
-		Executor executor = new Executor();
-		
-		executor.start();
-		
-		do{
-			executor.publishNewTask(new Task() {
-				@Override
-				public long execute() {
-					ReferenceNotification referenceNotification = null;
-					try{
-						referenceNotification =  findNextReferenceToLoad();
-						
-						save(dilicomConnector.loadReferenceFromUrl(referenceNotification.getUrl()));
-						
-						referenceNotification.setStatus(Status.OK);
-					}catch(Exception ex){
-						if(referenceNotification != null){
+		if(!isRunningInsideBusinessHours()){
+			if(referenceLoadInProgress){
+				throw new RuntimeException("A load is currently in progress.");
+			}
+			
+			this.referenceLoadInProgress = true;
+			
+			Executor executor = new Executor("Reference loader");
+			
+			executor.start();
+			
+			do{
+				if(!isRunningInsideBusinessHours()){
+					executor.publishNewTask(new Task() {
+						@Override
+						public long execute() {
+							ReferenceNotification referenceNotification = null;
 							try{
-								referenceNotification.setStatus(Status.ERROR);
-								referenceNotification.setCause(ExceptionUtils.getFullStackTrace(ex));
-							}catch(Exception ex2){
-								logger.error("Error while handling reference notification error from " + referenceNotification.getUrl() , ex2);
-							}
-
-							logger.error("Error while processing reference notification from " + referenceNotification.getUrl(), ex);
-						}else{
-							logger.error("Error", ex);
-						}
-					}finally{
-						if(referenceNotification != null){
-							try{
-								referenceNotificationService.save(referenceNotification);
+								referenceNotification =  findNextReferenceToLoad();
+								
+								if(referenceNotification == null){
+									referenceloadCompleted = true;
+								}else{
+									save(dilicomConnector.loadReferenceFromUrl(referenceNotification.getUrl()));
+								
+									referenceNotification.setStatus(Status.OK);
+								}
 							}catch(Exception ex){
-								logger.error("Error while processing reference notification from " + referenceNotification.getUrl(), ex);
+								if(referenceNotification != null){
+									try{
+										referenceNotification.setStatus(Status.ERROR);
+										referenceNotification.setCause(ExceptionUtils.getFullStackTrace(ex));
+									}catch(Exception ex2){
+										logger.error("Error while handling reference notification error from " + referenceNotification.getUrl() , ex2);
+									}
+		
+									logger.error("Error while processing reference notification from " + referenceNotification.getUrl(), ex);
+								}else{
+									logger.error("Error", ex);
+								}
+							}finally{
+								if(referenceNotification != null){
+									try{
+										referenceNotificationService.save(referenceNotification);
+									}catch(Exception ex){
+										logger.error("Error while processing reference notification from " + referenceNotification.getUrl(), ex);
+									}
+								}
 							}
+		
+							return 1;
 						}
-					}
-
-					return 1;
+					});
+				}else{
+					referenceloadCompleted = true;
 				}
-			});
-		}while(!loadCompleted);		
-		
-		executor.waitForCompletion();
-		
-		this.referenceLoadInProgress = false;
+			}while(!referenceloadCompleted);		
+			
+			executor.waitForCompletion();
+			
+			this.referenceLoadInProgress = false;
+		}
 	}
 	
 	@Override
@@ -308,14 +326,30 @@ public class ReferenceServiceImpl implements ReferenceService {
 		
 	}
 	
-	@Override
-	public void save(Reference reference){
-		this.referenceRepository.save(reference);
+	public boolean isRunningInsideBusinessHours(){
+		Calendar calendar = Calendar.getInstance();
+		
+		int dayOfWeek = calendar.get(Calendar.DAY_OF_WEEK);
+		if(dayOfWeek == Calendar.SATURDAY || dayOfWeek == Calendar.SUNDAY){
+			return false;
+		}
+		
+		int hourOfDay = calendar.get(Calendar.HOUR_OF_DAY);
+		if(hourOfDay < 8 || hourOfDay > 21){
+			return false;
+		}
+		
+		return true;
 	}
 	
 	@Override
 	public void save(Iterable<Reference> references){
 		this.referenceRepository.save(references);
+	}
+	
+	@Override
+	public void save(Reference reference){
+		this.referenceRepository.save(reference);
 	}
 	
 	@Override

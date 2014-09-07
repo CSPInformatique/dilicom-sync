@@ -16,6 +16,7 @@ public class Executor {
 	private long dataProcessed;
 	private int maxThreadCount;
 	private int maxTaskBufferSize;
+	private String processName;
 	private Date startDate;
 	private boolean taskPublicationCompleted;
 	private List<Task> tasksToProcess;
@@ -23,11 +24,12 @@ public class Executor {
 	
 	private DecimalFormat decimalFormat;
 
-	public Executor(){
-		this(50, 100);
+	public Executor(String processName){
+		this(processName, 50, 100);
 	}
 	
-	public Executor(int maxThreadCount, int maxTaskBufferSize) {
+	public Executor(String processName, int maxThreadCount, int maxTaskBufferSize) {
+		this.processName = processName;
 		this.maxTaskBufferSize = maxTaskBufferSize;
 		this.maxThreadCount = maxThreadCount;
 		
@@ -81,7 +83,7 @@ public class Executor {
 							--calculatedMaxThreadCount;
 						}
 	
-						logger.info("Currently processing " + decimalFormat.format(newDataProcessedBySecAverage) + " data per hour with " + threadCount + " thread(s).");
+						logger.info(processName + " currently processing " + decimalFormat.format(newDataProcessedBySecAverage) + " data per hour with " + threadCount + " thread(s).");
 					}while(!taskPublicationCompleted);
 				} catch (InterruptedException interruptedEx) {
 					throw new RuntimeException(interruptedEx);
