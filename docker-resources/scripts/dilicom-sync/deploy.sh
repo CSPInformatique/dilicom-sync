@@ -1,13 +1,15 @@
 #!/bin/bash
 WORKSPACE="/docker-workspace/dilicom-sync"
 
+docker rm -f ldf-dilicomsync
+
 cd $WORKSPACE
 
 echo "Launching maven build for dilicom-sync."
 
 mvn clean install
 
-cd docker-images
+cd docker-resources/scripts
 
 echo "Building Dockerfile for dilicom-sync."
 

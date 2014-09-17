@@ -1,13 +1,18 @@
 #!/bin/bash
 WORKSPACE="/docker-workspace/dilicom-sync"
-ES_DATA_DIR="/docker-data/es-dilicom-sync/data"
-ES_CONFIG_DIR="/docker-data/es-dilicom-sync/config"
+ES_DATA_DIR="/docker-data/es-dilicom-sync"
+
+docker rm -f ldf-elasticsearch
 
 echo "Deploying Elasticsearch for dilicom-sync."
-mkdir -p $ESDATADIR
+mkdir -p $ES_DATA_DIR
+
+CMD="cp $WORKSPACE/docker-resources/config/elasticsearch.yml $ES_DATA_DIR/elasticsearch.yml"
 
 echo "Copying configuration file to mounted volume."
-cp "WORKSPACE/dcoker-resources/config/elasticsearch.yml" "$ES_CONFIG_DIR/elasticsearch.yml"
+echo "	Cmd : $CMD"
+
+$CMD
 
 echo "Launching docker instance of Elasticsearch"
 
