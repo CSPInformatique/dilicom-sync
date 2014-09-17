@@ -3,20 +3,6 @@ WORKSPACE="/docker-workspace/dilicom-sync"
 ES_DATA_DIR="/docker-data/es-dilicom-sync/data"
 ES_CONFIG_DIR="/docker-data/es-dilicom-sync/config"
 
-cd $WORKSPACE
-
-echo "Launching maven build for dilicom-sync."
-
-mvn clean install
-
-cd docker-images
-
-echo "Building Dockerfile for dilicom-sync."
-
-docker-build.sh
-
-# Launch elasticsearch instance.
-
 echo "Deploying Elasticsearch for dilicom-sync."
 mkdir -p $ESDATADIR
 
