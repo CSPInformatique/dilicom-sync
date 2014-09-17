@@ -18,8 +18,6 @@ public class Reference {
 	private String isbnOrShortTitle;
 	private String theme;
 	private String coverImageUrl;
-	
-	@Field
 	private Date publicationDate;
 
 	// Technical infos
