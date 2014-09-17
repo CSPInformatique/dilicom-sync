@@ -11,7 +11,7 @@ cd docker-images
 
 echo "Building Dockerfile for dilicom-sync."
 
-docker-build.sh
+sh docker-build.sh
 
 CMD="docker run -d -p 8090:8080 --name ldf-dilicomsync cspinformatique/dilicom-sync"
 
