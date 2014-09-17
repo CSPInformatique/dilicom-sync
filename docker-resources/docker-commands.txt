@@ -1,8 +1,0 @@
-# Launch elasticsearch instance.
-docker run --name ldf-elasticsearch -d -p 9200:9200 -p 9300:9300 -v /docker-data/ldf-elasticsearch:/data dockerfile/elasticsearch /elasticsearch/bin/elasticsearch -Des.config=/data/elasticsearch.yml
-
-# Launch mongodb instance.
-docker run -d -p 27017:27017 --name ldf-mongodb -e ADMIN_USER=admin -e ADMIN_PASSWORD=admin cspinformatique/mongodb
-
-# Launch 
-docker run -d -p 8090:8080 --name ldf-dilicomsync cspinformatique/dilicom-sync
