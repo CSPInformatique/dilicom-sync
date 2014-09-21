@@ -1,6 +1,6 @@
 #!/bin/bash
 WORKSPACE="/docker-workspace/dilicom-sync"
-ES_DATA_DIR="/docker-data/es-dilicom-sync"
+ES_DATA_DIR="/docker-volumes/ldf-elasticsearch"
 
 docker rm -f ldf-elasticsearch
 
