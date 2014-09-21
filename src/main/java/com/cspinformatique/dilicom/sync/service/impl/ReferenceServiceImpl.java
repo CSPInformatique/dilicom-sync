@@ -105,9 +105,11 @@ public class ReferenceServiceImpl implements ReferenceService {
 	private synchronized ReferenceNotification findNextReferenceToLoad(){
 		ReferenceNotification referenceNotification = this.referenceNotificationService.findNextReferenceToProcess();
 		
-		referenceNotification.setStatus(Status.PROCESSING);
-		
-		this.referenceNotificationService.save(referenceNotification);
+		if(referenceNotification != null){
+			referenceNotification.setStatus(Status.PROCESSING);
+			
+			this.referenceNotificationService.save(referenceNotification);
+		}
 		
 		return referenceNotification;
 	}
