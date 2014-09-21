@@ -25,11 +25,17 @@ public class ReferenceRequestRepositoryImpl implements
 
 	@Override
 	public Integer findOldestPageIndexToProcess() {
-		return mongoOperation.findOne(
+		ReferenceRequest referenceRequest = mongoOperation.findOne(
 				new Query(new Criteria("status").is(Status.TO_PROCESS))
 						.limit(1).with(
 								new Sort(Sort.Direction.ASC, "pageIndex")),
-				ReferenceRequest.class).getPageIndex();
+				ReferenceRequest.class);
+
+		if (referenceRequest == null) {
+			return null;
+		}
+
+		return referenceRequest.getPageIndex();
 	}
 
 }
