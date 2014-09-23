@@ -2,6 +2,15 @@ body {
     padding-top: 65px; 
 }
 
+.references{
+	height: 400px;
+	overflow: auto;
+}
+
+.references td.title{
+	max-width: 300px;
+}
+
 .welcome{
 	font-size: 24pt;
 }

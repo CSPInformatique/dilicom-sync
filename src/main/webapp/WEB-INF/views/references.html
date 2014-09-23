@@ -14,9 +14,11 @@
 </head>
 
 <body>
-	<div th:include="menu :: menu"></div>
-	
-	<div class="referencePage-container"></div>
+	<div class="wrap">
+		<div th:include="menu :: menu"></div>
+
+		<div class="content referencePage-container"></div>
+	</div>
 
 	<script type="text/template" id="loading-template">
 		<div class="text-center">
@@ -28,23 +30,7 @@
 	</script>
 
 	<script type="text/template" id="referencePage-template">
-		<ul class="pager row text-center">
-			<li class="col-md-2 previous">
-	<@	if(!page.firstPage){	@>
-				<a href="#">&larr; Précédent</a>
-	<@	}	@>
-			</li>
-
-			<li class="col-md-8">Page <@= page.number + 1 @></li>
-
-			<li class="col-md-2 next">
-	<@	if(!page.lastPage){	@>
-				<a href="#">Suivant &rarr;</a>
-	<@	}	@>
-			</li>
-		</ul>
-
-		<div class="references table-responsive">
+		<div class="references">
 			<table class="table table-hover">
 				<thead class="text-center">
 					<tr class="active">
@@ -106,6 +92,24 @@
 				</tbody>
 			</table>
 		</div>
+
+		<div class="footer container">
+			<ul class="pager row text-center">
+				<li class="col-md-2 previous">
+	<@	if(!page.firstPage){	@>
+					<a href="#">&larr; Précédent</a>
+	<@	}	@>
+				</li>
+
+				<li class="col-md-8">Page <@= page.number + 1 @></li>
+
+				<li class="col-md-2 next">
+	<@	if(!page.lastPage){	@>
+					<a href="#">Suivant &rarr;</a>
+	<@	}	@>
+				</li>
+			</ul>
+		</div>
 	</script>
 
 	<script type="text/javascript" th:src="@{/libs/jquery-2.1.1/jquery.min.js}"></script>
@@ -116,6 +120,7 @@
 	<script type="text/javascript" th:src="@{/js/reference/reference-model.js}"></script>
 	<script type="text/javascript" th:src="@{/js/reference/reference-page.js}"></script>
 	<script type="text/javascript" th:src="@{/js/reference/reference-view.js}"></script>
+	<script type="text/javascript" src="http://cdnjs.cloudflare.com/ajax/libs/floatthead/1.2.8/jquery.floatThead.min.js"></script>
 </body>
 
 </html>

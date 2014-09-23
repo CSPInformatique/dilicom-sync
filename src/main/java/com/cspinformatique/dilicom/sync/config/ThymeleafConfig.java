@@ -23,6 +23,7 @@ public class ThymeleafConfig {
 		templateResolver.setPrefix(env.getRequiredProperty("thymeleaf.prefix"));
 		templateResolver.setSuffix(env.getRequiredProperty("thymeleaf.suffix"));
 		templateResolver.setTemplateMode(env.getRequiredProperty("thymeleaf.templateMode"));
+		templateResolver.setCacheable(false);
 		
 		return templateResolver;
 	}

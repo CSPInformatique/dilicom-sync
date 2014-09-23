@@ -20,8 +20,8 @@ window.ReferencePageView = Backbone.View.extend({
     	this.model.fetch({success : this.render});
     	
         this.template = _.template($('#referencePage-template').html());
-
-
+        
+        $(window).resize(this.adjustTableSize);
     },
     	
     render : function(){
@@ -81,11 +81,11 @@ window.ReferencePageView = Backbone.View.extend({
             );
         });
 
-//        $('.references table').floatThead({
-//            scrollContainer: function($table){
-//                return $table.closest('.references');
-//            }
-//        });
+        $('.references table').floatThead({
+            scrollContainer: function($table){
+                return $table.closest('.references');
+            }
+        });
 
         return this;
     }
