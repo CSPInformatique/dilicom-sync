@@ -4,33 +4,72 @@ import java.util.Date;
 
 import org.springframework.data.annotation.Id;
 import org.springframework.data.elasticsearch.annotations.Document;
+import org.springframework.data.elasticsearch.annotations.Field;
+import org.springframework.data.elasticsearch.annotations.FieldIndex;
+import org.springframework.data.elasticsearch.annotations.FieldType;
+import org.springframework.data.elasticsearch.annotations.MultiField;
+import org.springframework.data.elasticsearch.annotations.NestedField;
 
-@Document(indexName="reference")
+@Document(indexName = "reference")
 public class Reference {
-	// Functionnal Data.
+	@Id
 	private String ean13;
+
+	@MultiField(mainField = @Field(type = FieldType.String, index = FieldIndex.analyzed), otherFields = @NestedField(dotSuffix = "raw", type = FieldType.String, index = FieldIndex.not_analyzed))
 	private String title;
+
+	@Field(type=FieldType.String)
 	private String standardLabel;
+
+	@MultiField(mainField = @Field(type = FieldType.String, index = FieldIndex.analyzed), otherFields = @NestedField(dotSuffix = "raw", type = FieldType.String, index = FieldIndex.not_analyzed))
 	private String author;
+
+	@Field(type=FieldType.String)
 	private String shortCollection;
+
+	@MultiField(mainField = @Field(type = FieldType.String, index = FieldIndex.analyzed), otherFields = @NestedField(dotSuffix = "raw", type = FieldType.String, index = FieldIndex.not_analyzed))
 	private String publisherName;
+
+	@Field(type=FieldType.String)
 	private String isbnOrShortTitle;
+
+	@Field(type=FieldType.String)
 	private String theme;
+
+	@Field(type=FieldType.String)
 	private String coverImageUrl;
+
+	@Field(type=FieldType.Date)
 	private Date publicationDate;
 
-	// Technical infos
+	@Field(type=FieldType.String)
 	private String dilicomUrl;
-	private boolean hided;
-	private boolean loadedIntoErp;
 
-	public Reference(){
-		
-	}
+	@Field(type=FieldType.Boolean)
+	private boolean hided;
+
+	@Field(type=FieldType.Boolean)
+	private boolean loadedIntoErp;
 	
-	public Reference(String ean13, String title, String standardLabel, String author,
-			String shortCollection, String publisherName, String isbnOrShortTitle,
-			String theme, String coverImageUrl, Date publicationDate, String dilicomUrl, boolean hided, boolean loadedIntoErp) {
+	@Field(type=FieldType.Double)
+	private Double priceTaxIn;
+
+	@Field(type=FieldType.Double)
+	private Double priceTaxOut;
+
+	@Field(type=FieldType.Double)
+	private Double taxAmount;
+
+	public Reference() {
+
+	}
+
+	public Reference(String ean13, String title, String standardLabel,
+			String author, String shortCollection, String publisherName,
+			String isbnOrShortTitle, String theme, String coverImageUrl,
+			Date publicationDate, String dilicomUrl, boolean hided,
+			boolean loadedIntoErp, Double priceTaxIn, Double priceTaxOut,
+			Double taxAmount) {
 		this.ean13 = ean13;
 		this.title = title;
 		this.standardLabel = standardLabel;
@@ -44,9 +83,11 @@ public class Reference {
 		this.dilicomUrl = dilicomUrl;
 		this.hided = hided;
 		this.loadedIntoErp = loadedIntoErp;
+		this.priceTaxIn = priceTaxIn;
+		this.priceTaxOut = priceTaxOut;
+		this.taxAmount = taxAmount;
 	}
 
-	@Id
 	public String getEan13() {
 		return ean13;
 	}
@@ -149,6 +190,30 @@ public class Reference {
 
 	public void setLoadedIntoErp(boolean loadedIntoErp) {
 		this.loadedIntoErp = loadedIntoErp;
+	}
+
+	public Double getPriceTaxIn() {
+		return priceTaxIn;
+	}
+
+	public void setPriceTaxIn(Double priceTaxIn) {
+		this.priceTaxIn = priceTaxIn;
+	}
+
+	public Double getPriceTaxOut() {
+		return priceTaxOut;
+	}
+
+	public void setPriceTaxOut(Double priceTaxOut) {
+		this.priceTaxOut = priceTaxOut;
+	}
+
+	public Double getTaxAmount() {
+		return taxAmount;
+	}
+
+	public void setTaxAmount(Double taxAmount) {
+		this.taxAmount = taxAmount;
 	}
 
 }

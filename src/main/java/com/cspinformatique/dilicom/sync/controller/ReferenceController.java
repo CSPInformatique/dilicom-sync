@@ -40,133 +40,43 @@ public class ReferenceController {
 	public void importDump(){
 		this.referenceService.importDump();
 	}
-
-	@ResponseStatus(HttpStatus.OK)
-	@RequestMapping(method=RequestMethod.GET, params={"hided", "loadedIntoErp"})
-	public @ResponseBody Page<Reference> search(boolean hided, boolean loadedIntoErp, int page, int resultPerPage, String direction){
-		PageRequest pageRequest = new PageRequest(page, resultPerPage, new Sort(Direction.valueOf(direction), DEFAULT_ORDER_BY));
-		
-		return this.referenceService.search(hided, loadedIntoErp, pageRequest);
-	}
-
-	@ResponseStatus(HttpStatus.OK)
-	@RequestMapping(method=RequestMethod.GET, params={"hided", "loadedIntoErp", "orderBy"})
-	public @ResponseBody Page<Reference> search(boolean hided, boolean loadedIntoErp, int page, int resultPerPage, String orderBy, String direction){
-		PageRequest pageRequest = new PageRequest(page, resultPerPage, new Sort(Direction.valueOf(direction), orderBy));
-		
-		return this.referenceService.search(hided, loadedIntoErp, pageRequest);
-	}
-
-	@ResponseStatus(HttpStatus.OK)
-	@RequestMapping(method=RequestMethod.GET, params="loadedIntoErp")
-	public @ResponseBody Page<Reference> search(boolean loadedIntoErp, int page, int resultPerPage, String direction){
-		PageRequest pageRequest = new PageRequest(page, resultPerPage, new Sort(Direction.valueOf(direction), DEFAULT_ORDER_BY));
-		
-		return this.referenceService.search(loadedIntoErp, pageRequest);
-	}
-
-	@ResponseStatus(HttpStatus.OK)
-	@RequestMapping(method=RequestMethod.GET, params={"loadedIntoErp", "orderBy"})
-	public @ResponseBody Page<Reference> search(boolean loadedIntoErp, int page, int resultPerPage, String orderBy, String direction){
-		PageRequest pageRequest = new PageRequest(page, resultPerPage, new Sort(Direction.valueOf(direction), orderBy));
-		
-		return this.referenceService.search(loadedIntoErp, pageRequest);
-	}
 	
+	@RequestMapping(params="publishToErp")
+	@ResponseStatus(HttpStatus.NO_CONTENT)
+	public void publishReferenceToErp(String ean13){
+		this.referenceService.publishToErp(ean13);
+	}
+
 	@ResponseStatus(HttpStatus.OK)
 	@RequestMapping(method=RequestMethod.GET)
-	public @ResponseBody Page<Reference> search(int page, int resultPerPage, String direction){
-		PageRequest pageRequest = new PageRequest(page, resultPerPage, new Sort(Direction.valueOf(direction), DEFAULT_ORDER_BY));
-		
-		return this.referenceService.search(pageRequest);
-	}
-	
-	@ResponseStatus(HttpStatus.OK)
-	@RequestMapping(method=RequestMethod.GET, params="orderBy")
-	public @ResponseBody Page<Reference> search(int page, int resultPerPage, String orderBy, String direction){
-		PageRequest pageRequest = new PageRequest(page, resultPerPage, new Sort(Direction.valueOf(direction), orderBy));
-		
-		return this.referenceService.search(pageRequest);
+	public @ResponseBody Page<Reference> search(Boolean hided, Boolean loadedIntoErp, int page, int resultPerPage, String sortBy, String direction){		
+		return this.search(null, null, hided, loadedIntoErp, page, resultPerPage, sortBy, direction);
 	}
 
 	@ResponseStatus(HttpStatus.OK)
-	@RequestMapping(method=RequestMethod.GET, params={"title", "hided", "loadedIntoErp", "orderBy"})
-	public @ResponseBody Page<Reference> search(String title, boolean hided, boolean loadedIntoErp, int page, int resultPerPage, String orderBy, String direction){
-		PageRequest pageRequest = new PageRequest(page, resultPerPage, new Sort(Direction.valueOf(direction), orderBy));
-		
-		return this.referenceService.searchByTitle(title, hided, loadedIntoErp, pageRequest);
+	@RequestMapping(method=RequestMethod.GET, params="query")
+	public @ResponseBody Page<Reference> search(String query, Boolean hided, Boolean loadedIntoErp, int page, int resultPerPage, String sortBy, String direction){		
+		return this.search(query, null, hided, loadedIntoErp, page, resultPerPage, sortBy, direction);
 	}
 
 	@ResponseStatus(HttpStatus.OK)
-	@RequestMapping(method=RequestMethod.GET, params="title")
-	public @ResponseBody Page<Reference> search(String title, int page, int resultPerPage, String direction){
-		PageRequest pageRequest = new PageRequest(page, resultPerPage, new Sort(Direction.valueOf(direction), DEFAULT_ORDER_BY));
+	@RequestMapping(method=RequestMethod.GET, params={"query", "fields"})
+	public @ResponseBody Page<Reference> search(String query, String[] fields, Boolean hided, Boolean loadedIntoErp, Integer page, Integer resultPerPage, String sortBy, String direction){
+		if(page == null) page = 0;
+		if(resultPerPage == null) resultPerPage = 50;
+		if(sortBy == null) sortBy = DEFAULT_ORDER_BY;
+		if(direction == null) direction = "ASC";	
+		if(query != null && fields == null){
+			fields = new String[]{"ean13", "title", "author", "publisherName"};
+		}
 		
-		return this.referenceService.searchByTitle(title, pageRequest);
-	}
-
-	@ResponseStatus(HttpStatus.OK)
-	@RequestMapping(method=RequestMethod.GET, params={"title", "orderBy"})
-	public @ResponseBody Page<Reference> search(String title, int page, int resultPerPage, String orderBy, String direction){
-		PageRequest pageRequest = new PageRequest(page, resultPerPage, new Sort(Direction.valueOf(direction), orderBy));
+		if(sortBy.equals("title") || sortBy.equals("author") || sortBy.equals("publisherName")){
+			sortBy += ".raw";
+		}
 		
-		return this.referenceService.searchByTitle(title, pageRequest);
-	}
-
-	@ResponseStatus(HttpStatus.OK)
-	@RequestMapping(method=RequestMethod.GET, params={"title", "loadedIntoErp"})
-	public @ResponseBody Page<Reference> search(String title, boolean loadedIntoErp, int page, int resultPerPage, String direction){
-		PageRequest pageRequest = new PageRequest(page, resultPerPage, new Sort(Direction.valueOf(direction), DEFAULT_ORDER_BY));
+		PageRequest pageRequest = new PageRequest(page, resultPerPage, new Sort(Direction.valueOf(direction), sortBy));
 		
-		return this.referenceService.searchByTitle(title, loadedIntoErp, pageRequest);
-	}
-
-	@ResponseStatus(HttpStatus.OK)
-	@RequestMapping(method=RequestMethod.GET, params={"title", "hided", "loadedIntoErp"})
-	public @ResponseBody Page<Reference> search(String title, boolean hided, boolean loadedIntoErp, int page, int resultPerPage, String direction){
-		PageRequest pageRequest = new PageRequest(page, resultPerPage, new Sort(Direction.valueOf(direction), DEFAULT_ORDER_BY));
-		
-		return this.referenceService.searchByTitle(title, hided, loadedIntoErp, pageRequest);
-	}
-
-	@ResponseStatus(HttpStatus.OK)
-	@RequestMapping(method=RequestMethod.GET, params={"title", "loadedIntoErp", "orderBy"})
-	public @ResponseBody Page<Reference> search(String title, boolean loadedIntoErp, int page, int resultPerPage, String orderBy, String direction){
-		PageRequest pageRequest = new PageRequest(page, resultPerPage, new Sort(Direction.valueOf(direction), orderBy));
-		
-		return this.referenceService.searchByTitle(title, loadedIntoErp, pageRequest);
-	}
-	
-	@ResponseStatus(HttpStatus.OK)
-	@RequestMapping(method=RequestMethod.GET, params={"hided", "orderBy"})
-	public @ResponseBody Page<Reference> searchByHided(boolean hided, int page, int resultPerPage, String orderBy, String direction){
-		PageRequest pageRequest = new PageRequest(page, resultPerPage, new Sort(Direction.valueOf(direction), orderBy));
-		
-		return this.referenceService.search(hided, pageRequest);
-	}
-	
-	@ResponseStatus(HttpStatus.OK)
-	@RequestMapping(method=RequestMethod.GET, params="hided")
-	public @ResponseBody Page<Reference> searchByHided(boolean hided, int page, int resultPerPage, String direction){
-		PageRequest pageRequest = new PageRequest(page, resultPerPage, new Sort(Direction.valueOf(direction), DEFAULT_ORDER_BY));
-		
-		return this.referenceService.search(hided, pageRequest);
-	}
-
-	@ResponseStatus(HttpStatus.OK)
-	@RequestMapping(method=RequestMethod.GET, params={"title", "hided"})
-	public @ResponseBody Page<Reference> searchByHided(String title, boolean hided, int page, int resultPerPage, String direction){
-		PageRequest pageRequest = new PageRequest(page, resultPerPage, new Sort(Direction.valueOf(direction), DEFAULT_ORDER_BY));
-		
-		return this.referenceService.searchByTitle(title, hided, pageRequest);
-	}
-
-	@ResponseStatus(HttpStatus.OK)
-	@RequestMapping(method=RequestMethod.GET, params={"title", "hided", "orderBy"})
-	public @ResponseBody Page<Reference> searchByHided(String title, boolean hided, int page, int resultPerPage, String orderBy, String direction){
-		PageRequest pageRequest = new PageRequest(page, resultPerPage, new Sort(Direction.valueOf(direction), orderBy));
-		
-		return this.referenceService.searchByTitleAndHided(title, hided, pageRequest);
+		return this.referenceService.search(query, fields, hided, loadedIntoErp, pageRequest);
 	}
 	
 	@ResponseStatus(HttpStatus.NO_CONTENT)

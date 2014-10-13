@@ -9,6 +9,33 @@ window.ReferencePageView = Backbone.View.extend({
     	'click .delete button' : 'deleteContract',
     },
     
+    generateUrl : function(query, fields, page, results, sortBy, direction){
+    	var hrefUrl = "#" +
+	        page + "/" + 
+	        results + "/" +
+	        sortBy + "/" +
+	        direction;
+    
+	    if(query != null && query != ""){
+	    	hrefUrl += "/" + query;
+	    	
+	    	if(fields != null && fields.length > 0){
+	    		hrefUrl += "/";
+	    		var first = true;
+	    		for(var fieldIndex in fields){
+	    			if(!first){
+	    				hrefUrl += ";";
+	    			}
+	    			
+	    			hrefUrl += fields[fieldIndex];
+	    			first = false;
+	    		}
+	    	}
+	    }
+	    
+	    return hrefUrl;
+    },
+    
     initialize : function() {
         /*--- binding ---*/
         _.bindAll(this, 'render');
@@ -42,21 +69,27 @@ window.ReferencePageView = Backbone.View.extend({
 
         $(".pager .previous a").attr(
             "href", 
-            "#" +
-            	(parseInt(this.model.page) - 1) + "/" + 
-            	this.model.results + "/" +
-            	this.model.sortBy + "/" +
-            	this.model.direction, 
+            this.generateUrl(
+            	this.model.query, 
+            	this.model.fields, 
+            	(parseInt(this.model.page) - 1), 
+            	this.model.results, 
+            	this.model.sortBy, 
+            	this.model.direction
+            ), 
             {trigger: true}
         );
 
         $(".pager .next a").attr(
             "href", 
-            "#" + 
-                (parseInt(this.model.page) + 1) + "/" + 
-                this.model.results + "/" +
-                this.model.sortBy + "/" +
-                this.model.direction, 
+            this.generateUrl(
+            	this.model.query, 
+            	this.model.fields, 
+            	(parseInt(this.model.page) + 1), 
+            	this.model.results, 
+            	this.model.sortBy, 
+            	this.model.direction
+            ), 
             {trigger: true}
         );
 
@@ -69,16 +102,40 @@ window.ReferencePageView = Backbone.View.extend({
                 direction = direction == "ASC" ? "DESC" : "ASC";
 
             }
-
+            
             $(element).attr(
-                "href", 
-                "#" +
-	                referencePageView.model.page + "/" + 
-	                referencePageView.model.results + "/" +
-                    sortBy + "/" +
-                    direction, 
+                "href",
+                referencePageView.generateUrl(
+            		referencePageView.model.query, 
+            		referencePageView.model.fields, 
+                	referencePageView.model.page, 
+                	referencePageView.model.results, 
+                	sortBy, 
+                	direction
+                ), 
                 {trigger: true}
             );
+        });
+        
+        $(".references .loadIntoErp").click(function(index, element){
+        	var uploadToErpIcon = $(this);
+        	var loadingIcon = $(this).parent().find(".uploadingToErp");
+        	var okIcon = $(this).parent().find(".glyphicon-ok");
+        	
+        	uploadToErpIcon.hide();
+        	loadingIcon.removeClass("hidden").show();
+        	
+        	var ean13 = $(this).parent().parent().attr("data-reference-ean13");
+        	
+        	$.ajax({
+				url: "reference?publishToErp&ean13=" + ean13,
+        	}).always(function(){
+        		loadingIcon.hide();
+        	}).done(function() {
+        		okIcon.removeClass("hidden").show();
+    		}).fail(function() {
+    			uploadToErpIcon.show();
+    		});
         });
 
         $('.references table').floatThead({

@@ -24,6 +24,16 @@ window.ReferencePage = Backbone.Model.extend({
 		var url = "reference.json?page=" + this.page + "&resultPerPage="
 				+ this.results;
 
+		if(this.query != null){
+			url += "&query=" + this.query; 
+		}
+		
+		if(this.fields != null){
+			for(var fieldIndex in this.fields){
+				url += "&fields=" + this.fields[fieldIndex]; 
+			}
+		}
+		
 		if (this.sortBy != null) {
 			url += "&sortBy=" + this.sortBy;
 		}

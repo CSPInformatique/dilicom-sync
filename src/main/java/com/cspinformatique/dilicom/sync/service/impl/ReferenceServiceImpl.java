@@ -31,6 +31,7 @@ import com.cspinformatique.dilicom.sync.entity.ReferenceNotification.Status;
 import com.cspinformatique.dilicom.sync.entity.ReferenceRequest;
 import com.cspinformatique.dilicom.sync.repository.elasticsearch.ReferenceRepository;
 import com.cspinformatique.dilicom.sync.service.ConfigEntryService;
+import com.cspinformatique.dilicom.sync.service.ErpService;
 import com.cspinformatique.dilicom.sync.service.ReferenceNotificationService;
 import com.cspinformatique.dilicom.sync.service.ReferenceRequestService;
 import com.cspinformatique.dilicom.sync.service.ReferenceService;
@@ -50,6 +51,9 @@ public class ReferenceServiceImpl implements ReferenceService {
 
 	@Autowired
 	private DilicomConnector dilicomConnector;
+	
+	@Autowired
+	private ErpService erpService;
 
 	@Autowired
 	private ReferenceNotificationService referenceNotificationService;
@@ -125,6 +129,11 @@ public class ReferenceServiceImpl implements ReferenceService {
 		}
 
 		return referenceNotification;
+	}
+	
+	@Override
+	public Reference findOne(String ean13){
+		return this.referenceRepository.findOne(ean13);
 	}
 
 	@Override
@@ -363,12 +372,18 @@ public class ReferenceServiceImpl implements ReferenceService {
 	}
 
 	@Override
-	public void publishToOdoo(String ean13) {
+	public void publishToErp(String ean13) {
 		ReferenceNotification notification = new ReferenceNotification(ean13,
 				new Date(), ReferenceNotification.Status.ERROR, null);
+		
 		try {
-			logger.warn("Publication to ERP not yet implemented");
+			Reference reference = this.findOne(ean13);
+			
+			erpService.publishProductToOdoo(reference);
 
+			reference.setLoadedIntoErp(true);			
+			this.save(reference);
+			
 			notification.setStatus(ReferenceNotification.Status.OK);
 		} catch (Exception ex) {
 			logger.error("Error while publishing reference " + ean13
@@ -378,12 +393,12 @@ public class ReferenceServiceImpl implements ReferenceService {
 
 			throw new RuntimeException(ex);
 		} finally {
-			// save the notification status.
+			referenceNotificationService.save(notification);
 		}
 	}
 
 	private boolean isDataImportationFromDilicomActivated(){
-		Boolean result = this.env.getProperty("dilicomsync.dilicom.importDate", Boolean.class);
+		Boolean result = this.env.getProperty("dilicomsync.dilicom.importData", Boolean.class);
 		
 		if(result == null){
 			return false;
@@ -419,56 +434,6 @@ public class ReferenceServiceImpl implements ReferenceService {
 	}
 
 	@Override
-	public Page<Reference> search(Pageable pageable) {
-		return this.referenceRepository.findAll(pageable);
-	}
-
-	@Override
-	public Page<Reference> search(boolean loadedIntoErp, Pageable pageable) {
-		return this.referenceRepository.findByLoadedIntoErp(loadedIntoErp,
-				pageable);
-	}
-
-	@Override
-	public Page<Reference> search(boolean hided, boolean loadedIntoErp,
-			Pageable pageable) {
-		return this.referenceRepository.findByHidedAndLoadedIntoErp(hided,
-				loadedIntoErp, pageable);
-	}
-
-	@Override
-	public Page<Reference> searchByHided(boolean hided, Pageable pageable) {
-		return this.referenceRepository.findByHided(hided, pageable);
-	}
-
-	@Override
-	public Page<Reference> searchByTitle(String title, Pageable pageable) {
-		return this.referenceRepository.findByTitleLike(title, pageable);
-	}
-
-	@Override
-	public Page<Reference> searchByTitle(String title, boolean loadedIntoErp,
-			Pageable pageable) {
-		return this.referenceRepository.findByTitleLikeAndLoadedIntoErp(title,
-				loadedIntoErp, pageable);
-	}
-
-	@Override
-	public Page<Reference> searchByTitle(String title, boolean hided,
-			boolean loadedIntoErp, Pageable pageable) {
-		return this.referenceRepository
-				.findByTitleLikeAndHidedAndLoadedIntoErp(title, hided,
-						loadedIntoErp, pageable);
-	}
-
-	@Override
-	public Page<Reference> searchByTitleAndHided(String title, boolean hided,
-			Pageable pageable) {
-		return this.referenceRepository.findByTitleLikeAndHided(title, hided,
-				pageable);
-	}
-
-	@Override
 	public void unhideReference(String ean13) {
 		Reference reference = this.referenceRepository.findOne(ean13);
 
@@ -481,5 +446,11 @@ public class ReferenceServiceImpl implements ReferenceService {
 		reference.setHided(false);
 
 		this.referenceRepository.save(reference);
+	}
+
+	@Override
+	public Page<Reference> search(String query, String[] fields, Boolean hided,
+			Boolean loadedIntoErp, Pageable pageable) {
+		return referenceRepository.search(query, fields, hided, loadedIntoErp, pageable);
 	}
 }

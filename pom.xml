@@ -70,6 +70,11 @@
 			<groupId>org.springframework.boot</groupId>
 			<artifactId>spring-boot-starter-data-mongodb</artifactId>
 		</dependency>
+		<dependency>
+			<groupId>com.cspinformatique</groupId>
+			<artifactId>odoo-java-api</artifactId>
+			<version>0.1.0-SNAPSHOT</version>
+		</dependency>
 	</dependencies>
 	<build>
 		<finalName>dilicom-sync</finalName>

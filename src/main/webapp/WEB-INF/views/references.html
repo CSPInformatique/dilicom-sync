@@ -17,6 +17,22 @@
 	<div class="wrap">
 		<div th:include="menu :: menu"></div>
 
+		<div class="searchBar">
+			<input type="text" placeholder="Recherche" />
+			<button>GO</button>
+			<label>
+				<input type="checkbox" value="title" />
+				Titre
+			</label>
+			<label>
+				<input type="checkbox" value="author"/>
+				Auteur
+			</label>
+			<label>
+				<input type="checkbox" value="publisherName"/>
+				Editeur
+			</label>
+		</div>
 		<div class="content referencePage-container"></div>
 	</div>
 
@@ -24,7 +40,7 @@
 		<div class="text-center">
 			<div>Chargement des références</div>
 			<div>
-		       	<img class="loading" src="images/misc/loading.gif" />" alt="Chargement" />
+		       	<img class="loading" src="images/misc/loading.gif" alt="Chargement" />
 		    </div>
 		</div>
 	</script>
@@ -74,11 +90,20 @@
 							<td class="publisherName"><@= reference.publisherName @></td>
 							<td class="publicationDate date"><@= reference.publicationDate @></td>
 							<td class="badges">
-								<@	if(reference.loadedIntoErp){	@>
-									<span class="loadIntoErp glyphicon glyphicon-plus"> </span>
-								<@	}else{	@>
-									<span class="glyphicon glyphicon-upload"> </span>
-								<@	}	@>
+								<@	var hideLoadIntoErp = "";
+									var hideErpOk = "";
+
+									if(reference.loadedIntoErp){
+										hideLoadIntoErp = "hidden";
+									}else{
+										hideErpOk = "hidden";
+									}	
+								@>
+								<span class="loadIntoErp glyphicon glyphicon-plus <@=hideLoadIntoErp @>"> </span>
+								
+								<img class="uploadingToErp hidden" src="images/misc/uploading-to-erp.gif" />
+
+								<span class="glyphicon glyphicon-ok <@=hideErpOk @>"> </span>
 
 								<a href="<@= reference.dilicomUrl @>" target="_blank">
 									<span class="glyphicon glyphicon-list-alt"> </span>

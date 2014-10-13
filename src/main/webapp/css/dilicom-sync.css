@@ -11,6 +11,10 @@ body {
 	max-width: 300px;
 }
 
+.references .loadIntoErp{
+	cursor: pointer;	
+}
+
 .welcome{
 	font-size: 24pt;
 }

@@ -1,5 +1,7 @@
 package com.cspinformatique.dilicom.sync.util.impl;
 
+import java.text.DecimalFormat;
+import java.text.DecimalFormatSymbols;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
@@ -27,7 +29,7 @@ import com.cspinformatique.dilicom.sync.util.DilicomConnector;
 
 @Component
 @PropertySource("classpath:config/backends/dilicom.properties")
-public class DilicomConnectorImpl implements DilicomConnector{
+public class DilicomConnectorImpl implements DilicomConnector {
 	private static final Logger logger = LoggerFactory
 			.getLogger(DilicomConnector.class);
 
@@ -40,9 +42,19 @@ public class DilicomConnectorImpl implements DilicomConnector{
 	private String tomcatid;
 	private String jSessionId;
 	private RestTemplate restTemplate;
+	
+	private DecimalFormat decimalFormat;
+	private DecimalFormat moneyFormat;
 
 	public DilicomConnectorImpl() {
 		this.restTemplate = new RestTemplate();
+		
+		decimalFormat = new DecimalFormat("0.00");
+		decimalFormat.setDecimalFormatSymbols(new DecimalFormatSymbols());
+		
+		DecimalFormatSymbols otherSymbols = new DecimalFormatSymbols();
+		otherSymbols.setDecimalSeparator(',');
+		moneyFormat = new DecimalFormat("0,00", otherSymbols);
 	}
 
 	public static String cleanString(String string) {
@@ -138,6 +150,7 @@ public class DilicomConnectorImpl implements DilicomConnector{
 					public boolean onNode(Jerry $this, int index) {
 						String tdContent = DilicomConnectorImpl
 								.cleanString($this.$("td").html());
+						
 						if (index == 3
 								&& $this.$("th").html().contains("EAN 13")) {
 							reference.setEan13(tdContent);
@@ -180,7 +193,8 @@ public class DilicomConnectorImpl implements DilicomConnector{
 		String publicationDate = DilicomConnectorImpl.cleanString(document.$(
 				".detail_fiche:nth-child(2) td:nth-child(3)").html());
 
-		if (publicationDate != null && !publicationDate.startsWith("Pas paru")) {
+		if (publicationDate != null && !publicationDate.startsWith("Pas paru")
+				&& !publicationDate.startsWith("Date non connue")) {
 			try {
 				reference.setPublicationDate(new SimpleDateFormat(
 						PUBLICATION_DATE_FORMAT).parse(publicationDate));
@@ -192,6 +206,38 @@ public class DilicomConnectorImpl implements DilicomConnector{
 						+ PUBLICATION_DATE_FORMAT, parseEx);
 			}
 		}
+		
+		document.$(".detail_fiche:nth-child(3) tbody:nth-child(4) tr").each(
+				new JerryFunction() {
+					@Override
+					public boolean onNode(Jerry $this, int index) {
+						String tdContent = DilicomConnectorImpl
+								.cleanString($this.$("td").html());
+						
+						if(!tdContent.contains("Gratuit") && !tdContent.contains("Prix non fix")){
+							String thContent = $this.$("th").html();
+							
+							try {
+								if (index == 0 || index == 1) {
+									double price = moneyFormat.parse(tdContent.substring(0, tdContent.lastIndexOf("&euro;") - 1)).doubleValue();
+								
+									if(thContent.contains("Prix :")){
+										reference.setPriceTaxIn(price);
+									}else if (thContent.contains("Prix HT :")){
+										reference.setPriceTaxOut(price);
+									}
+								}else if(index == 2 && thContent.contains("Taux de TVA :")){
+									reference.setTaxAmount(decimalFormat.parse(tdContent.substring(0, tdContent.lastIndexOf("%") - 1)).doubleValue());
+								}
+							} catch (Exception ex) {
+								logger.error("Price could not be parsed for " + tdContent, ex);
+							}
+						}
+						
+						return true;
+					}
+				}
+			);
 
 		reference.setCoverImageUrl(document.$("a#cover_img").attr("href"));
 
@@ -309,7 +355,7 @@ public class DilicomConnectorImpl implements DilicomConnector{
 			@Override
 			public boolean onNode(Jerry $this, int index) {
 				String referenceUrl = "https://dilicom-prod.centprod.com"
-								+ $this.$(".fiche_title a").attr("href");
+						+ $this.$(".fiche_title a").attr("href");
 
 				referenceUrls.add(referenceUrl);
 
